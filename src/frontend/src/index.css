@@ -1,0 +1,123 @@
+@font-face {
+  font-family: "Outfit";
+  src: url("/assets/fonts/Outfit.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0 0.06;
+    --foreground: 0 0 0.96;
+    --card: 0 0 0.1;
+    --card-foreground: 0 0 0.96;
+    --popover: 0 0 0.12;
+    --popover-foreground: 0 0 0.96;
+    --primary: 0.72 0.19 55;
+    --primary-foreground: 0 0 0.06;
+    --secondary: 0 0 0.22;
+    --secondary-foreground: 0 0 0.96;
+    --muted: 0 0 0.18;
+    --muted-foreground: 0 0 0.55;
+    --accent: 0.72 0.19 55;
+    --accent-foreground: 0 0 0.06;
+    --destructive: 0.55 0.21 25;
+    --destructive-foreground: 0 0 0.96;
+    --border: 0 0 0.2;
+    --input: 0 0 0.18;
+    --ring: 0.72 0.19 55;
+    --radius: 0.75rem;
+    --vault-bg: 0.12 0 210;
+    --vault-accent: 0.72 0.18 195;
+    --chart-1: 0.72 0.19 55;
+    --chart-2: 0.72 0.18 195;
+    --chart-3: 0.65 0.21 145;
+    --chart-4: 0.6 0.22 300;
+    --chart-5: 0.55 0.21 25;
+    --sidebar: 0 0 0.08;
+    --sidebar-foreground: 0 0 0.96;
+    --sidebar-primary: 0.72 0.19 55;
+    --sidebar-primary-foreground: 0 0 0.06;
+    --sidebar-accent: 0 0 0.14;
+    --sidebar-accent-foreground: 0 0 0.96;
+    --sidebar-border: 0 0 0.18;
+    --sidebar-ring: 0.72 0.19 55;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.calc-btn {
+  @apply flex items-center justify-center rounded-full font-display font-medium select-none cursor-pointer transition-all duration-100 active:scale-95;
+}
+
+.calc-btn-number {
+  @apply bg-[oklch(0.32_0_0)] text-white;
+}
+
+.calc-btn-number:active {
+  @apply bg-[oklch(0.45_0_0)];
+}
+
+.calc-btn-op {
+  @apply bg-[oklch(0.72_0.19_55)] text-[oklch(0.06_0_0)];
+}
+
+.calc-btn-op:active {
+  @apply bg-[oklch(0.85_0.14_55)];
+}
+
+.calc-btn-function {
+  @apply bg-[oklch(0.45_0_0)] text-white;
+}
+
+.calc-btn-function:active {
+  @apply bg-[oklch(0.58_0_0)];
+}
+
+.vault-bg {
+  background: oklch(0.09 0.01 210);
+}
+
+.vault-card {
+  background: oklch(0.13 0.01 210);
+  border: 1px solid oklch(0.22 0.02 210);
+}
+
+.pin-dot {
+  @apply w-4 h-4 rounded-full border-2 transition-all duration-200;
+  border-color: oklch(0.72 0.18 195);
+}
+
+.pin-dot.filled {
+  background: oklch(0.72 0.18 195);
+}
+
+.pin-key {
+  @apply flex items-center justify-center rounded-full w-16 h-16 text-xl font-display font-medium cursor-pointer select-none transition-all duration-100 active:scale-90;
+  background: oklch(0.2 0.02 210);
+  color: oklch(0.92 0 0);
+}
+
+.pin-key:active {
+  background: oklch(0.3 0.03 210);
+}
