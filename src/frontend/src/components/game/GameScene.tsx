@@ -9,12 +9,15 @@ const ROAD_WIDTH = 18;
 const LANES = [-6, 0, 6];
 const GEAR_MAX_SPEED_MS = [0, 8.3, 16.7, 25, 33.3, 41.7, 50];
 const TOTAL_BIKES = 6;
+const LATERAL_SPEED = 8;
 
 interface Controls {
   up: boolean;
   down: boolean;
   gearUp: boolean;
   gearDown: boolean;
+  left: boolean;
+  right: boolean;
 }
 
 interface AiState {
@@ -221,6 +224,7 @@ function Scene3D({
   const aiMeshRefs = useRef<(THREE.Group | null)[]>([]);
   const prevGearUp = useRef(false);
   const prevGearDown = useRef(false);
+  const leanAngle = useRef(0);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -263,6 +267,15 @@ function Scene3D({
     g.playerZ += g.playerVelZ * dt;
     g.wheelRot += g.playerVelZ * dt * 2;
 
+    // Lateral movement
+    if (ctrl.left) g.playerX -= LATERAL_SPEED * dt;
+    if (ctrl.right) g.playerX += LATERAL_SPEED * dt;
+    g.playerX = Math.max(-8, Math.min(8, g.playerX));
+
+    // Lean animation
+    const targetLean = ctrl.left ? 0.15 : ctrl.right ? -0.15 : 0;
+    leanAngle.current += (targetLean - leanAngle.current) * 10 * dt;
+
     for (const ai of g.aiStates) {
       const diff = ai.targetSpeed - ai.velZ;
       ai.velZ += diff * 1.2 * dt;
@@ -301,6 +314,7 @@ function Scene3D({
 
     if (playerMeshRef.current) {
       playerMeshRef.current.position.set(g.playerX, 0, g.playerZ);
+      playerMeshRef.current.rotation.z = leanAngle.current;
     }
     for (let i = 0; i < g.aiStates.length; i++) {
       const mesh = aiMeshRefs.current[i];
@@ -309,7 +323,8 @@ function Scene3D({
 
     const camTarget = new THREE.Vector3(g.playerX, 4.5, g.playerZ - 10);
     camera.position.lerp(camTarget, 0.12);
-    camera.lookAt(new THREE.Vector3(g.playerX, 1.5, g.playerZ + 20));
+    const lookX = g.playerX + (ctrl.right ? 1 : ctrl.left ? -1 : 0);
+    camera.lookAt(new THREE.Vector3(lookX, 1.5, g.playerZ + 20));
   });
 
   return (
@@ -352,6 +367,10 @@ function HUD({
   onBrakeEnd,
   onAccelStart,
   onAccelEnd,
+  onLeftStart,
+  onLeftEnd,
+  onRightStart,
+  onRightEnd,
 }: {
   data: HudData;
   onPause: () => void;
@@ -361,10 +380,21 @@ function HUD({
   onBrakeEnd: () => void;
   onAccelStart: () => void;
   onAccelEnd: () => void;
+  onLeftStart: () => void;
+  onLeftEnd: () => void;
+  onRightStart: () => void;
+  onRightEnd: () => void;
 }) {
   const ordinals = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
   const gearNames = ["", "1", "2", "3", "4", "5", "6"];
   const gearBars = [1, 2, 3, 4, 5, 6];
+
+  const steerBtnStyle = {
+    background: "oklch(0.2 0.03 240 / 0.85)",
+    backdropFilter: "blur(8px)",
+    color: "oklch(0.9 0 0)",
+    border: "2px solid oklch(0.4 0.05 240 / 0.5)",
+  };
 
   return (
     <div
@@ -488,6 +518,7 @@ function HUD({
 
       {/* Mobile Controls */}
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between p-4 pointer-events-auto">
+        {/* BRAKE - far left */}
         <button
           type="button"
           data-ocid="game.brake_button"
@@ -507,11 +538,25 @@ function HUD({
           🛑<span className="text-xs">BRAKE</span>
         </button>
 
-        <div className="flex gap-3 items-end pb-2">
+        {/* Center controls: LEFT / GEAR DOWN / GEAR UP / RIGHT */}
+        <div className="flex gap-2 items-end pb-2">
+          <button
+            type="button"
+            data-ocid="game.steer_left_button"
+            className="w-14 h-14 rounded-full font-bold text-xl flex flex-col items-center justify-center gap-0 transition-all duration-75 active:scale-90 select-none"
+            style={steerBtnStyle}
+            onTouchStart={onLeftStart}
+            onTouchEnd={onLeftEnd}
+            onMouseDown={onLeftStart}
+            onMouseUp={onLeftEnd}
+            onMouseLeave={onLeftEnd}
+          >
+            ◀
+          </button>
           <button
             type="button"
             data-ocid="game.gear_down_button"
-            className="w-16 h-16 rounded-full font-bold text-lg flex flex-col items-center justify-center gap-0.5 transition-all duration-75 active:scale-90 select-none"
+            className="w-14 h-14 rounded-full font-bold text-lg flex flex-col items-center justify-center gap-0.5 transition-all duration-75 active:scale-90 select-none"
             style={{
               background: "oklch(0.2 0 0 / 0.85)",
               backdropFilter: "blur(8px)",
@@ -521,12 +566,12 @@ function HUD({
             onTouchStart={onGearDown}
             onMouseDown={onGearDown}
           >
-            ▼<span className="text-xs">DOWN</span>
+            ▼<span className="text-xs">DN</span>
           </button>
           <button
             type="button"
             data-ocid="game.gear_up_button"
-            className="w-16 h-16 rounded-full font-bold text-lg flex flex-col items-center justify-center gap-0.5 transition-all duration-75 active:scale-90 select-none"
+            className="w-14 h-14 rounded-full font-bold text-lg flex flex-col items-center justify-center gap-0.5 transition-all duration-75 active:scale-90 select-none"
             style={{
               background: "oklch(0.2 0 0 / 0.85)",
               backdropFilter: "blur(8px)",
@@ -538,8 +583,22 @@ function HUD({
           >
             ▲<span className="text-xs">UP</span>
           </button>
+          <button
+            type="button"
+            data-ocid="game.steer_right_button"
+            className="w-14 h-14 rounded-full font-bold text-xl flex flex-col items-center justify-center gap-0 transition-all duration-75 active:scale-90 select-none"
+            style={steerBtnStyle}
+            onTouchStart={onRightStart}
+            onTouchEnd={onRightEnd}
+            onMouseDown={onRightStart}
+            onMouseUp={onRightEnd}
+            onMouseLeave={onRightEnd}
+          >
+            ▶
+          </button>
         </div>
 
+        {/* ACCELERATE - far right */}
         <button
           type="button"
           data-ocid="game.accelerate_button"
@@ -655,6 +714,8 @@ export default function GameScene({
     down: false,
     gearUp: false,
     gearDown: false,
+    left: false,
+    right: false,
   });
 
   const initialAi: AiState[] = AI_COLORS.map((color, i) => ({
@@ -699,6 +760,14 @@ export default function GameScene({
         e.preventDefault();
         controlsRef.current.down = true;
       }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        controlsRef.current.left = true;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        controlsRef.current.right = true;
+      }
       if (e.key === "z" || e.key === "Z") controlsRef.current.gearUp = true;
       if (e.key === "x" || e.key === "X") controlsRef.current.gearDown = true;
       if (e.key === "p" || e.key === "P") togglePause();
@@ -706,6 +775,8 @@ export default function GameScene({
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowUp") controlsRef.current.up = false;
       if (e.key === "ArrowDown") controlsRef.current.down = false;
+      if (e.key === "ArrowLeft") controlsRef.current.left = false;
+      if (e.key === "ArrowRight") controlsRef.current.right = false;
       if (e.key === "z" || e.key === "Z") controlsRef.current.gearUp = false;
       if (e.key === "x" || e.key === "X") controlsRef.current.gearDown = false;
     };
@@ -770,6 +841,18 @@ export default function GameScene({
         }}
         onAccelEnd={() => {
           controlsRef.current.up = false;
+        }}
+        onLeftStart={() => {
+          controlsRef.current.left = true;
+        }}
+        onLeftEnd={() => {
+          controlsRef.current.left = false;
+        }}
+        onRightStart={() => {
+          controlsRef.current.right = true;
+        }}
+        onRightEnd={() => {
+          controlsRef.current.right = false;
         }}
       />
 

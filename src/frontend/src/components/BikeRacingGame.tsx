@@ -266,6 +266,7 @@ function MenuScreen({ onStart }: { onStart: (bike: BikeConfig) => void }) {
               [
                 ["↑", "Accelerate"],
                 ["↓", "Brake"],
+                ["← →", "Steer"],
                 ["Z", "Gear Up"],
                 ["X", "Gear Down"],
                 ["P", "Pause"],
